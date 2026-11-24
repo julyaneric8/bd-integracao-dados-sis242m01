@@ -129,7 +129,11 @@ def importar(conn, tabela, colunas):
 
 def main():
     print("Conectando no PostgreSQL...")
-    conn = psycopg2.connect(**DB)
+    try:
+        conn = psycopg2.connect(**DB)
+    except UnicodeDecodeError as e:
+        print("Falha ao conectar:", e.object.decode("cp1252", errors="replace"))
+        raise SystemExit(1)
     conn.autocommit = True  # erro em uma linha nao desfaz as outras
     print("Conectado!\n")
     # a ordem importa por causa das chaves estrangeiras
