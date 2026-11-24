@@ -1,18 +1,16 @@
 -- DDL corrigido (PostgreSQL)
--- Ordem de criacao: fornecedor -> produtos_filial -> venda -> pedido_compra -> entradas_mercadoria
--- Ajuste os tipos se a planilha mostrar algo diferente (ex.: unidade_medida maior, id de fornecedor texto).
 
 DROP TABLE IF EXISTS entradas_mercadoria, pedido_compra, venda, produtos_filial, fornecedor CASCADE;
 
--- Corrigido: PK so com o id (antes incluia idproduto, que nao existe); typo idforncedor -> idfornecedor
+-- Corrigido: PK so com o id (usava idproduto, que nao existe); typo idforncedor
 CREATE TABLE fornecedor (
-    idfornecedor  varchar(25)  NOT NULL,   -- na planilha e texto: 'F1', 'F2'...
+    idfornecedor  varchar(25)  NOT NULL,
     razao_social  varchar(255) NOT NULL,
     CONSTRAINT fornecedor_pkey PRIMARY KEY (idfornecedor)
 );
 
--- Corrigido: virgula faltando, PK com idproduto -> produto_id, typos decricao/idfonecedor,
--- precos float8 -> numeric, filial_id NOT NULL, produto_id varchar(25), FK para fornecedor
+-- Corrigido: virgula faltando; PK com idproduto -> produto_id; typos decricao/idfonecedor;
+-- precos float -> numeric; idfornecedor int -> texto; FK para fornecedor
 CREATE TABLE produtos_filial (
     filial_id       integer       NOT NULL,
     produto_id      varchar(25)   NOT NULL,
@@ -21,13 +19,13 @@ CREATE TABLE produtos_filial (
     preco_unitario  numeric(12,4) NOT NULL DEFAULT 0,
     preco_compra    numeric(12,4) NOT NULL DEFAULT 0,
     preco_venda     numeric(12,4) NOT NULL DEFAULT 0,
-    idfornecedor    varchar(25),           -- na planilha e texto: 'F8'; no DDL original era int4
+    idfornecedor    varchar(25),
     CONSTRAINT produtos_filial_pkey PRIMARY KEY (filial_id, produto_id),
     CONSTRAINT fk_produtos_fornecedor FOREIGN KEY (idfornecedor) REFERENCES fornecedor (idfornecedor)
 );
 
--- Corrigido: nome da PK (pk_consumo -> pk_venda), filial_id int4, qtde float8 -> numeric NOT NULL,
--- horariomov varchar -> time, sem default '' em produto_id, unidade_medida maior
+-- Corrigido: nome da PK (pk_consumo -> pk_venda); qtde float -> numeric NOT NULL;
+-- horariomov varchar -> time; sem default '' em produto_id
 CREATE TABLE venda (
     venda_id        bigint        NOT NULL,
     data_emissao    date          NOT NULL,
@@ -40,9 +38,10 @@ CREATE TABLE venda (
     unidade_medida  varchar(10),
     CONSTRAINT pk_venda PRIMARY KEY (filial_id, venda_id, data_emissao, produto_id, item, horariomov)
 );
--- Obs.: FK venda -> produtos_filial pode ser adicionada depois de limpar os dados.
 
--- Corrigido: ids/itens float8 -> bigint/integer, valores float8 -> numeric
+-- Corrigido: ids e itens float -> bigint/integer; valores float -> numeric;
+-- qtde_pendente (ausente na planilha) vira coluna calculada
+-- fornecedor_id sem FK: a planilha traz 1..20 e fornecedor usa 'F1'..'F20'
 CREATE TABLE pedido_compra (
     pedido_id          bigint        NOT NULL,
     data_pedido        date,
@@ -54,17 +53,14 @@ CREATE TABLE pedido_compra (
     filial_id          integer       NOT NULL,
     data_entrega       date,
     qtde_entregue      numeric(14,3) NOT NULL DEFAULT 0,
-    -- qtde_pendente nao existe na planilha: vira coluna calculada pelo proprio banco
     qtde_pendente      numeric(14,3) GENERATED ALWAYS AS (qtde_pedida - qtde_entregue) STORED,
     preco_compra       numeric(12,4) NOT NULL DEFAULT 0,
-    fornecedor_id      integer,   -- planilha traz 1..20, mas fornecedor usa 'F1'..'F20': sem FK ate validar com o cliente
+    fornecedor_id      integer,
     CONSTRAINT pedido_compra_pkey PRIMARY KEY (pedido_id, produto_id, item)
 );
--- ordem_compra nao e unica, entao nao serve de FK; o indice acelera o join com entradas_mercadoria.
 CREATE INDEX idx_pedido_ordem_compra ON pedido_compra (ordem_compra);
 
--- Corrigido: coluna ordem_compra criada (a PK usava uma coluna inexistente), item float8 -> integer,
--- qtde NOT NULL
+-- Corrigido: coluna ordem_compra criada (a PK usava uma coluna inexistente); item float -> integer
 CREATE TABLE entradas_mercadoria (
     ordem_compra       bigint        NOT NULL,
     data_entrada       date,
