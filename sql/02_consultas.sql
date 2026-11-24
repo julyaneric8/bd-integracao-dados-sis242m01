@@ -1,5 +1,7 @@
--- Consulta 1: total vendido por produto em fevereiro de 2025
+-- 02_consultas
+-- Nome: Julyan Eric Lopes Pinto
 
+-- Total vendido por produto em fevereiro de 2025 (quantidade e R$)
 SELECT
     produto_id,
     SUM(qtde_vendida)                  AS total_quantidade,
@@ -10,8 +12,9 @@ WHERE data_emissao >= '2025-02-01'
 GROUP BY produto_id
 ORDER BY produto_id;
 
--- Consulta 2: produtos requisitados e nao recebidos
-
+-- Produtos requisitados e nao recebidos
+-- "Recebido" = entrada com a mesma ordem_compra e o mesmo produto_id.
+-- Pedidos com ordem_compra = 0 (erro nos dados) aparecem aqui mesmo que o produto tenha chegado.
 SELECT
     p.pedido_id,
     p.produto_id,
